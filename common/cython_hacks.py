@@ -12,10 +12,7 @@ def get_ext_filename_without_platform_suffix(filename):
   ext_suffix = ext_suffix.replace(ext, '')
   idx = name.find(ext_suffix)
 
-  if idx == -1:
-    return filename
-  else:
-    return name[:idx] + ext
+  return filename if idx == -1 else name[:idx] + ext
 
 class BuildExtWithoutPlatformSuffix(build_ext):
   def get_ext_filename(self, ext_name):

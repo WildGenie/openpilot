@@ -34,7 +34,7 @@ class TestCamerad(unittest.TestCase):
     print("checking frame pkts continuity")
     print(TEST_TIMESPAN)
 
-    sm = messaging.SubMaster([socket_name for socket_name in CAMERAS])
+    sm = messaging.SubMaster(list(CAMERAS))
 
     last_frame_id = dict.fromkeys(CAMERAS, None)
     last_ts = dict.fromkeys(CAMERAS, None)

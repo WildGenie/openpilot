@@ -81,8 +81,7 @@ class AcadosOcpSolverFast:
 
         getattr(self.shared_lib, f"{model_name}_acados_solve").argtypes = [c_void_p]
         getattr(self.shared_lib, f"{model_name}_acados_solve").restype = c_int
-        status = getattr(self.shared_lib, f"{model_name}_acados_solve")(self.capsule)
-        return status
+        return getattr(self.shared_lib, f"{model_name}_acados_solve")(self.capsule)
 
     def cost_set(self, start_stage_, field_, value_, api='warn'):
       self.cost_set_slice(start_stage_, start_stage_+1, field_, value_[None], api='warn')
@@ -250,11 +249,6 @@ class AcadosOcpSolverFast:
                       sl: slack variables of soft lower inequality constraints \n
                       su: slack variables of soft upper inequality constraints \n
         """
-        cost_fields = ['y_ref', 'yref']
-        constraints_fields = ['lbx', 'ubx', 'lbu', 'ubu']
-        out_fields = ['x', 'u', 'pi', 'lam', 't', 'z']
-        mem_fields = ['sl', 'su']
-
         # cast value_ to avoid conversion issues
         if isinstance(value_, (float, int)):
             value_ = np.array([value_])
@@ -276,6 +270,11 @@ class AcadosOcpSolverFast:
 
             assert getattr(self.shared_lib, f"{model_name}_acados_update_params")(self.capsule, stage, value_data, value_.shape[0])==0
         else:
+            cost_fields = ['y_ref', 'yref']
+            constraints_fields = ['lbx', 'ubx', 'lbu', 'ubu']
+            out_fields = ['x', 'u', 'pi', 'lam', 't', 'z']
+            mem_fields = ['sl', 'su']
+
             if field_ not in constraints_fields + cost_fields + out_fields + mem_fields:
                 raise Exception("AcadosOcpSolver.set(): {} is not a valid argument.\
                     \nPossible values are {}. Exiting.".format(field, \

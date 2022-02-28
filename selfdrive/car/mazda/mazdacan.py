@@ -39,11 +39,7 @@ def create_steering_control(packer, car_fingerprint, frame, apply_steer, lkas):
     csum = csum + 15
 
   if csum < 0:
-    if csum < -256:
-      csum = csum + 512
-    else:
-      csum = csum + 256
-
+    csum = csum + 512 if csum < -256 else csum + 256
   csum = csum % 256
 
   if car_fingerprint in GEN1:
@@ -81,10 +77,10 @@ def create_alert_command(packer, cam_msg: dict, ldw: bool, steer_required: bool)
 
 def create_button_cmd(packer, car_fingerprint, counter, button):
 
-  can = int(button == Buttons.CANCEL)
-  res = int(button == Buttons.RESUME)
-
   if car_fingerprint in GEN1:
+    can = int(button == Buttons.CANCEL)
+    res = int(button == Buttons.RESUME)
+
     values = {
       "CAN_OFF": can,
       "CAN_OFF_INV": (can + 1) % 2,

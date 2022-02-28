@@ -51,7 +51,7 @@ def generate_c_code_gnsf( model, opts ):
 
     cwd = os.getcwd()
     os.chdir(code_export_dir)
-    model_dir = model_name + '_model'
+    model_dir = f'{model_name}_model'
     if not os.path.exists(model_dir):
         os.mkdir(model_dir)
     model_dir_location = os.path.join('.', model_dir)
@@ -74,11 +74,7 @@ def generate_c_code_gnsf( model, opts ):
     # -> evaluated SX GNSF functions with MX.
     u = model.u
 
-    if isinstance(u, casadi.MX):
-        symbol = MX.sym
-    else:
-        symbol = SX.sym
-
+    symbol = MX.sym if isinstance(u, casadi.MX) else SX.sym
     y = symbol("y", gnsf_ny, 1)
     uhat = symbol("uhat", gnsf_nuhat, 1)
     p = model.p
@@ -89,21 +85,21 @@ def generate_c_code_gnsf( model, opts ):
     empty_var = symbol("gnsf_empty_var", 0, 0)
 
     ## generate C code
-    fun_name = model_name + '_gnsf_phi_fun'
+    fun_name = f'{model_name}_gnsf_phi_fun'
     phi_fun_ = Function(fun_name, [y, uhat, p], [phi_fun(y, uhat, p)])
     phi_fun_.generate(fun_name, casadi_opts)
 
-    fun_name = model_name + '_gnsf_phi_fun_jac_y'
+    fun_name = f'{model_name}_gnsf_phi_fun_jac_y'
     phi_fun_jac_y = model.phi_fun_jac_y
     phi_fun_jac_y_ = Function(fun_name, [y, uhat, p], phi_fun_jac_y(y, uhat, p))
     phi_fun_jac_y_.generate(fun_name, casadi_opts)
 
-    fun_name = model_name + '_gnsf_phi_jac_y_uhat'
+    fun_name = f'{model_name}_gnsf_phi_jac_y_uhat'
     phi_jac_y_uhat = model.phi_jac_y_uhat
     phi_jac_y_uhat_ = Function(fun_name, [y, uhat, p], phi_jac_y_uhat(y, uhat, p))
     phi_jac_y_uhat_.generate(fun_name, casadi_opts)
 
-    fun_name = model_name + '_gnsf_f_lo_fun_jac_x1k1uz'
+    fun_name = f'{model_name}_gnsf_f_lo_fun_jac_x1k1uz'
     f_lo_fun_jac_x1k1uz = model.f_lo_fun_jac_x1k1uz
     f_lo_fun_jac_x1k1uz_eval = f_lo_fun_jac_x1k1uz(x1, x1dot, z1, u, p)
 
@@ -115,7 +111,7 @@ def generate_c_code_gnsf( model, opts ):
                  f_lo_fun_jac_x1k1uz_eval)
     f_lo_fun_jac_x1k1uz_.generate(fun_name, casadi_opts)
 
-    fun_name = model_name + '_gnsf_get_matrices_fun'
+    fun_name = f'{model_name}_gnsf_get_matrices_fun'
     get_matrices_fun_ = Function(fun_name, [dummy], get_matrices_fun(1))
     get_matrices_fun_.generate(fun_name, casadi_opts)
 

@@ -43,10 +43,7 @@ class RadarInterface(RadarInterfaceBase):
       cpt = self.rcp.vl[ii]
 
       if cpt['X_Rel'] > 0.00001:
-        self.validCnt[ii] = 0    # reset counter
-
-      if cpt['X_Rel'] > 0.00001:
-        self.validCnt[ii] += 1
+        self.validCnt[ii] = 0 + 1
       else:
         self.validCnt[ii] = max(self.validCnt[ii] - 1, 0)
       #print ii, self.validCnt[ii], cpt['VALID'], cpt['X_Rel'], cpt['Angle']
@@ -63,9 +60,8 @@ class RadarInterface(RadarInterfaceBase):
         self.pts[ii].aRel = float('nan')
         self.pts[ii].yvRel = float('nan')
         self.pts[ii].measured = True
-      else:
-        if ii in self.pts:
-          del self.pts[ii]
+      elif ii in self.pts:
+        del self.pts[ii]
 
     ret.points = list(self.pts.values())
     self.updated_messages.clear()

@@ -295,9 +295,8 @@ def get_fw_versions(logcan, sendcan, bus, extra=None, timeout=0.1, debug=False, 
         if sub_addr is None:
           if a not in parallel_addrs:
             parallel_addrs.append(a)
-        else:
-          if [a] not in addrs:
-            addrs.append([a])
+        elif [a] not in addrs:
+          addrs.append([a])
 
   addrs.insert(0, parallel_addrs)
 
@@ -306,9 +305,8 @@ def get_fw_versions(logcan, sendcan, bus, extra=None, timeout=0.1, debug=False, 
     for addr_chunk in chunks(addr):
       for brand, request, response, response_offset in REQUESTS:
         try:
-          addrs = [(a, s) for (b, a, s) in addr_chunk if b in (brand, 'any')]
-
-          if addrs:
+          if addrs := [(a, s) for (b, a, s) in addr_chunk
+                       if b in (brand, 'any')]:
             query = IsoTpParallelQuery(sendcan, logcan, bus, addrs, request, response, response_offset, debug=debug)
             t = 2 * timeout if i == 0 else timeout
             fw_versions.update(query.get_data(t))

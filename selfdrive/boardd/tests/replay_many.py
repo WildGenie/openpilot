@@ -49,10 +49,7 @@ def send_thread(sender_serial):
       time.sleep(1)
 
 if __name__ == "__main__":
-  if jungle:
-    serials = PandaJungle.list()
-  else:
-    serials = Panda.list()
+  serials = PandaJungle.list() if jungle else Panda.list()
   num_senders = len(serials)
 
   if num_senders == 0:

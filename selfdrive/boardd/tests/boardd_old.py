@@ -30,10 +30,7 @@ except Exception:
 def can_list_to_can_capnp(can_msgs, msgtype='can'):
   dat = messaging.new_message(msgtype, len(can_msgs))
   for i, can_msg in enumerate(can_msgs):
-    if msgtype == 'sendcan':
-      cc = dat.sendcan[i]
-    else:
-      cc = dat.can[i]
+    cc = dat.sendcan[i] if msgtype == 'sendcan' else dat.can[i]
     cc.address = can_msg[0]
     cc.busTime = can_msg[1]
     cc.dat = bytes(can_msg[2])
@@ -49,7 +46,7 @@ def can_health():
       break
     except (USBErrorIO, USBErrorOverflow):
       cloudlog.exception("CAN: BAD HEALTH, RETRYING")
-  v, i = struct.unpack("II", dat[0:8])
+  v, i = struct.unpack("II", dat[:8])
   ign_line, ign_can = struct.unpack("BB", dat[20:22])
   return {"voltage": v, "current": i, "ignition_line": bool(ign_line), "ignition_can": bool(ign_can)}
 
@@ -57,7 +54,7 @@ def __parse_can_buffer(dat):
   ret = []
   for j in range(0, len(dat), 0x10):
     ddat = dat[j:j+0x10]
-    f1, f2 = struct.unpack("II", ddat[0:8])
+    f1, f2 = struct.unpack("II", ddat[:8])
     ret.append((f1 >> 21, f2 >> 16, ddat[8:8 + (f2 & 0xF)], (f2 >> 4) & 0xFF))
   return ret
 

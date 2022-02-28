@@ -47,11 +47,7 @@ def generate_c_code_external_cost(model, stage_type, opts):
     x = model.x
     p = model.p
 
-    if isinstance(x, MX):
-        symbol = MX.sym
-    else:
-        symbol = SX.sym
-
+    symbol = MX.sym if isinstance(x, MX) else SX.sym
     if stage_type == 'terminal':
         suffix_name = "_cost_ext_cost_e_fun"
         suffix_name_hess = "_cost_ext_cost_e_fun_jac_hess"
@@ -102,10 +98,10 @@ def generate_c_code_external_cost(model, stage_type, opts):
 
     cwd = os.getcwd()
     os.chdir(code_export_dir)
-    gen_dir = model.name + '_cost'
+    gen_dir = f'{model.name}_cost'
     if not os.path.exists(gen_dir):
         os.mkdir(gen_dir)
-    gen_dir_location = "./" + gen_dir
+    gen_dir_location = f"./{gen_dir}"
     os.chdir(gen_dir_location)
 
     ext_cost_fun.generate(fun_name, casadi_opts)

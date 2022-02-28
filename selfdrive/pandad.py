@@ -92,10 +92,7 @@ def main() -> None:
       cloudlog.info(f"{len(panda_serials)} panda(s) found, connecting - {panda_serials}")
 
       # Flash pandas
-      pandas = []
-      for serial in panda_serials:
-        pandas.append(flash_panda(serial))
-
+      pandas = [flash_panda(serial) for serial in panda_serials]
       # check health for lost heartbeat
       for panda in pandas:
         health = panda.health()

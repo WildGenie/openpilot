@@ -17,8 +17,7 @@ else:
 def get_file_handler():
   Path(SWAGLOG_DIR).mkdir(parents=True, exist_ok=True)
   base_filename = os.path.join(SWAGLOG_DIR, "swaglog")
-  handler = SwaglogRotatingFileHandler(base_filename)
-  return handler
+  return SwaglogRotatingFileHandler(base_filename)
 
 class SwaglogRotatingFileHandler(BaseRotatingHandler):
   def __init__(self, base_filename, interval=60, max_bytes=1024*256, backup_count=2500, encoding=None):
@@ -42,7 +41,7 @@ class SwaglogRotatingFileHandler(BaseRotatingHandler):
     return stream
 
   def get_existing_logfiles(self):
-    log_files = list()
+    log_files = []
     base_dir = os.path.dirname(self.base_filename)
     for fn in os.listdir(base_dir):
       fp = os.path.join(base_dir, fn)

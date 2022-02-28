@@ -25,14 +25,10 @@ class CarState(CarStateBase):
 
     if self.CP.carFingerprint in [CAR.ROGUE, CAR.XTRAIL, CAR.ALTIMA]:
       ret.gas = cp.vl["GAS_PEDAL"]["GAS_PEDAL"]
+      ret.brakePressed = bool(cp.vl["DOORS_LIGHTS"]["USER_BRAKE_PRESSED"])
     elif self.CP.carFingerprint in [CAR.LEAF, CAR.LEAF_IC]:
       ret.gas = cp.vl["CRUISE_THROTTLE"]["GAS_PEDAL"]
 
-    ret.gasPressed = bool(ret.gas > 3)
-
-    if self.CP.carFingerprint in [CAR.ROGUE, CAR.XTRAIL, CAR.ALTIMA]:
-      ret.brakePressed = bool(cp.vl["DOORS_LIGHTS"]["USER_BRAKE_PRESSED"])
-    elif self.CP.carFingerprint in [CAR.LEAF, CAR.LEAF_IC]:
       ret.brakePressed = bool(cp.vl["CRUISE_THROTTLE"]["USER_BRAKE_PRESSED"])
 
     ret.wheelSpeeds.fl = cp.vl["WHEEL_SPEEDS_FRONT"]["WHEEL_SPEED_FL"] * CV.KPH_TO_MS
@@ -42,6 +38,7 @@ class CarState(CarStateBase):
 
     ret.vEgoRaw = (ret.wheelSpeeds.fl + ret.wheelSpeeds.fr + ret.wheelSpeeds.rl + ret.wheelSpeeds.rr) / 4.
 
+    ret.gasPressed = bool(ret.gas > 3)
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
     ret.standstill = ret.vEgoRaw < 0.01
 

@@ -20,11 +20,8 @@ def get_startup_event(car_recognized, controller_available, fw_seen):
     event = EventName.startupMaster
 
   if not car_recognized:
-    if fw_seen:
-      event = EventName.startupNoCar
-    else:
-      event = EventName.startupNoFw
-  elif car_recognized and not controller_available:
+    event = EventName.startupNoCar if fw_seen else EventName.startupNoFw
+  elif not controller_available:
     event = EventName.startupNoControl
   return event
 
@@ -40,15 +37,18 @@ def load_interfaces(brand_names):
   ret = {}
   for brand_name in brand_names:
     path = ('selfdrive.car.%s' % brand_name)
-    CarInterface = __import__(path + '.interface', fromlist=['CarInterface']).CarInterface
+    CarInterface = __import__(
+        f'{path}.interface', fromlist=['CarInterface']).CarInterface
 
-    if os.path.exists(BASEDIR + '/' + path.replace('.', '/') + '/carstate.py'):
-      CarState = __import__(path + '.carstate', fromlist=['CarState']).CarState
+    if os.path.exists(f'{BASEDIR}/' + path.replace('.', '/') + '/carstate.py'):
+      CarState = __import__(f'{path}.carstate', fromlist=['CarState']).CarState
     else:
       CarState = None
 
-    if os.path.exists(BASEDIR + '/' + path.replace('.', '/') + '/carcontroller.py'):
-      CarController = __import__(path + '.carcontroller', fromlist=['CarController']).CarController
+    if os.path.exists(f'{BASEDIR}/' + path.replace('.', '/') +
+                      '/carcontroller.py'):
+      CarController = __import__(
+          f'{path}.carcontroller', fromlist=['CarController']).CarController
     else:
       CarController = None
 
@@ -62,7 +62,7 @@ def _get_interface_names():
   # - keys are all the car names that which we have an interface for
   # - values are lists of spefic car models for a given car
   brand_names = {}
-  for car_folder in [x[0] for x in os.walk(BASEDIR + '/selfdrive/car')]:
+  for car_folder in [x[0] for x in os.walk(f'{BASEDIR}/selfdrive/car')]:
     try:
       brand_name = car_folder.split('/')[-1]
       model_names = __import__('selfdrive.car.%s.values' % brand_name, fromlist=['CAR']).CAR
@@ -85,9 +85,6 @@ def fingerprint(logcan, sendcan):
   skip_fw_query = os.environ.get('SKIP_FW_QUERY', False)
 
   if not fixed_fingerprint and not skip_fw_query:
-    # Vin query only reliably works thorugh OBDII
-    bus = 1
-
     cached_params = Params().get("CarParamsCache")
     if cached_params is not None:
       cached_params = car.CarParams.from_bytes(cached_params)
@@ -100,6 +97,9 @@ def fingerprint(logcan, sendcan):
       car_fw = list(cached_params.carFw)
     else:
       cloudlog.warning("Getting VIN & FW versions")
+      # Vin query only reliably works thorugh OBDII
+      bus = 1
+
       _, vin = get_vin(logcan, sendcan, bus)
       car_fw = get_fw_versions(logcan, sendcan, bus)
 
@@ -136,8 +136,8 @@ def fingerprint(logcan, sendcan):
 
     # if we only have one car choice and the time since we got our first
     # message has elapsed, exit
-    for b in candidate_cars:
-      if len(candidate_cars[b]) == 1 and frame > frame_fingerprint:
+    for b, value in candidate_cars.items():
+      if len(value) == 1 and frame > frame_fingerprint:
         # fingerprint done
         car_fingerprint = candidate_cars[b][0]
 

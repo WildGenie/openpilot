@@ -12,11 +12,7 @@ def get_pt_bus(car_fingerprint):
 
 
 def get_lkas_cmd_bus(car_fingerprint, radar_disabled=False):
-  if radar_disabled:
-    # when radar is disabled, steering commands are sent directly to powertrain bus
-    return get_pt_bus(car_fingerprint)
-  # normally steering commands are sent to radar, which forwards them to powertrain bus
-  return 0
+  return get_pt_bus(car_fingerprint) if radar_disabled else 0
 
 def create_brake_command(packer, apply_brake, pump_on, pcm_override, pcm_cancel_cmd, fcw, idx, car_fingerprint, stock_brake):
   # TODO: do we loose pressure if we keep pump off for long?
@@ -44,7 +40,6 @@ def create_brake_command(packer, apply_brake, pump_on, pcm_override, pcm_cancel_
 
 
 def create_acc_commands(packer, enabled, active, accel, gas, idx, stopping, starting, car_fingerprint):
-  commands = []
   bus = get_pt_bus(car_fingerprint)
   min_gas_accel = CarControllerParams.BOSCH_GAS_LOOKUP_BP[0]
 
@@ -65,8 +60,7 @@ def create_acc_commands(packer, enabled, active, accel, gas, idx, stopping, star
     "STANDSTILL": standstill,
     "STANDSTILL_RELEASE": standstill_release,
   }
-  commands.append(packer.make_can_msg("ACC_CONTROL", bus, acc_control_values, idx))
-
+  commands = [packer.make_can_msg("ACC_CONTROL", bus, acc_control_values, idx)]
   acc_control_on_values = {
     "SET_TO_3": 0x03,
     "CONTROL_ON": enabled,

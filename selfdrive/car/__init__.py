@@ -7,7 +7,7 @@ STD_CARGO_KG = 136.
 
 
 def gen_empty_fingerprint():
-  return {i: {} for i in range(0, 4)}
+  return {i: {} for i in range(4)}
 
 
 # FIXME: hardcoding honda civic 2016 touring params so they can be used to

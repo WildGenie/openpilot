@@ -68,11 +68,7 @@ def generate_c_code_implicit_ode( model, opts ):
     ## generate hessian
     x_xdot_z_u = vertcat(x, xdot, z, u)
 
-    if isinstance(x, casadi.MX):
-        symbol = MX.sym
-    else:
-        symbol = SX.sym
-
+    symbol = MX.sym if isinstance(x, casadi.MX) else SX.sym
     multiplier  = symbol('multiplier', nx + nz)
 
     ADJ = jtimes(f_impl, x_xdot_z_u, multiplier, True)
@@ -80,10 +76,10 @@ def generate_c_code_implicit_ode( model, opts ):
 
     ## Set up functions
     p = model.p
-    fun_name = model_name + '_impl_dae_fun'
+    fun_name = f'{model_name}_impl_dae_fun'
     impl_dae_fun = Function(fun_name, [x, xdot, u, z, p], [f_impl])
 
-    fun_name = model_name + '_impl_dae_fun_jac_x_xdot_z'
+    fun_name = f'{model_name}_impl_dae_fun_jac_x_xdot_z'
     impl_dae_fun_jac_x_xdot_z = Function(fun_name, [x, xdot, u, z, p], [f_impl, jac_x, jac_xdot, jac_z])
 
     # fun_name = model_name + '_impl_dae_fun_jac_x_xdot_z'
@@ -92,17 +88,17 @@ def generate_c_code_implicit_ode( model, opts ):
     # fun_name = model_name + '_impl_dae_jac_x_xdot_u'
     # impl_dae_jac_x_xdot_u = Function(fun_name, [x, xdot, u, z, p], [jac_x, jac_xdot, jac_u, jac_z])
 
-    fun_name = model_name + '_impl_dae_fun_jac_x_xdot_u_z'
+    fun_name = f'{model_name}_impl_dae_fun_jac_x_xdot_u_z'
     impl_dae_fun_jac_x_xdot_u_z = Function(fun_name, [x, xdot, u, z, p], [f_impl, jac_x, jac_xdot, jac_u, jac_z])
 
-    fun_name = model_name + '_impl_dae_fun_jac_x_xdot_u'
+    fun_name = f'{model_name}_impl_dae_fun_jac_x_xdot_u'
     impl_dae_fun_jac_x_xdot_u = Function(fun_name, [x, xdot, u, z, p], [f_impl, jac_x, jac_xdot, jac_u])
 
-    fun_name = model_name + '_impl_dae_jac_x_xdot_u_z'
+    fun_name = f'{model_name}_impl_dae_jac_x_xdot_u_z'
     impl_dae_jac_x_xdot_u_z = Function(fun_name, [x, xdot, u, z, p], [jac_x, jac_xdot, jac_u, jac_z])
 
 
-    fun_name = model_name + '_impl_dae_hess'
+    fun_name = f'{model_name}_impl_dae_hess'
     impl_dae_hess = Function(fun_name, [x, xdot, u, z, multiplier, p], [HESS])
 
     # generate C code
@@ -111,29 +107,29 @@ def generate_c_code_implicit_ode( model, opts ):
 
     cwd = os.getcwd()
     os.chdir(code_export_dir)
-    model_dir = model_name + '_model'
+    model_dir = f'{model_name}_model'
     if not os.path.exists(model_dir):
         os.mkdir(model_dir)
     model_dir_location = os.path.join('.', model_dir)
     os.chdir(model_dir_location)
 
-    fun_name = model_name + '_impl_dae_fun'
+    fun_name = f'{model_name}_impl_dae_fun'
     impl_dae_fun.generate(fun_name, casadi_opts)
 
-    fun_name = model_name + '_impl_dae_fun_jac_x_xdot_z'
+    fun_name = f'{model_name}_impl_dae_fun_jac_x_xdot_z'
     impl_dae_fun_jac_x_xdot_z.generate(fun_name, casadi_opts)
 
-    fun_name = model_name + '_impl_dae_jac_x_xdot_u_z'
+    fun_name = f'{model_name}_impl_dae_jac_x_xdot_u_z'
     impl_dae_jac_x_xdot_u_z.generate(fun_name, casadi_opts)
 
-    fun_name = model_name + '_impl_dae_fun_jac_x_xdot_u_z'
+    fun_name = f'{model_name}_impl_dae_fun_jac_x_xdot_u_z'
     impl_dae_fun_jac_x_xdot_u_z.generate(fun_name, casadi_opts)
 
-    fun_name = model_name + '_impl_dae_fun_jac_x_xdot_u'
+    fun_name = f'{model_name}_impl_dae_fun_jac_x_xdot_u'
     impl_dae_fun_jac_x_xdot_u.generate(fun_name, casadi_opts)
 
     if generate_hess:
-        fun_name = model_name + '_impl_dae_hess'
+        fun_name = f'{model_name}_impl_dae_hess'
         impl_dae_hess.generate(fun_name, casadi_opts)
 
     os.chdir(cwd)

@@ -1,4 +1,5 @@
 """Utilities for reading real time clocks and keeping soft real time constraints."""
+
 import gc
 import os
 import time
@@ -15,12 +16,7 @@ DT_MDL = 0.05  # model
 DT_TRML = 0.5  # thermald and manager
 
 # driver monitoring
-if TICI:
-  DT_DMON = 0.05
-else:
-  DT_DMON = 0.1
-
-
+DT_DMON = 0.05 if TICI else 0.1
 class Priority:
   # CORE 2
   # - modeld = 55

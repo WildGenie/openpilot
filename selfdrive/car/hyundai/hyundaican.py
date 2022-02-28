@@ -78,8 +78,6 @@ def create_lfahda_mfc(packer, enabled, hda_set_speed=0):
   return packer.make_can_msg("LFAHDA_MFC", 0, values)
 
 def create_acc_commands(packer, enabled, accel, jerk, idx, lead_visible, set_speed, stopping):
-  commands = []
-
   scc11_values = {
     "MainMode_ACC": 1,
     "TauGapSet": 4,
@@ -91,8 +89,7 @@ def create_acc_commands(packer, enabled, accel, jerk, idx, lead_visible, set_spe
     "ACC_ObjRelSpd": 0,
     "ACC_ObjDist": 0,
   }
-  commands.append(packer.make_can_msg("SCC11", 0, scc11_values))
-
+  commands = [packer.make_can_msg("SCC11", 0, scc11_values)]
   scc12_values = {
     "ACCMode": 1 if enabled else 0,
     "StopReq": 1 if enabled and stopping else 0,
@@ -101,7 +98,8 @@ def create_acc_commands(packer, enabled, accel, jerk, idx, lead_visible, set_spe
     "CR_VSM_Alive": idx % 0xF,
   }
   scc12_dat = packer.make_can_msg("SCC12", 0, scc12_values)[2]
-  scc12_values["CR_VSM_ChkSum"] = 0x10 - sum([sum(divmod(i, 16)) for i in scc12_dat]) % 0x10
+  scc12_values["CR_VSM_ChkSum"] = (
+      0x10 - sum(sum(divmod(i, 16)) for i in scc12_dat) % 0x10)
 
   commands.append(packer.make_can_msg("SCC12", 0, scc12_values))
 
@@ -126,21 +124,19 @@ def create_acc_commands(packer, enabled, accel, jerk, idx, lead_visible, set_spe
     "FCA_Status": 1, # AEB disabled
   }
   fca11_dat = packer.make_can_msg("FCA11", 0, fca11_values)[2]
-  fca11_values["CR_FCA_ChkSum"] = 0x10 - sum([sum(divmod(i, 16)) for i in fca11_dat]) % 0x10
+  fca11_values["CR_FCA_ChkSum"] = (
+      0x10 - sum(sum(divmod(i, 16)) for i in fca11_dat) % 0x10)
   commands.append(packer.make_can_msg("FCA11", 0, fca11_values))
 
   return commands
 
 def create_acc_opt(packer):
-  commands = []
-
   scc13_values = {
     "SCCDrvModeRValue": 2,
     "SCC_Equip": 1,
     "Lead_Veh_Dep_Alert_USM": 2,
   }
-  commands.append(packer.make_can_msg("SCC13", 0, scc13_values))
-
+  commands = [packer.make_can_msg("SCC13", 0, scc13_values)]
   fca12_values = {
     "FCA_DrvSetState": 2,
     "FCA_USM": 1, # AEB disabled

@@ -68,7 +68,7 @@ def generate_c_code_explicit_ode( model, opts ):
     Sp = symbol('Sp', nx, nu)
     lambdaX = symbol('lambdaX', nx, 1)
 
-    fun_name = model_name + '_expl_ode_fun'
+    fun_name = f'{model_name}_expl_ode_fun'
 
     ## Set up functions
     expl_ode_fun = Function(fun_name, [x, u, p], [f_expl])
@@ -76,13 +76,13 @@ def generate_c_code_explicit_ode( model, opts ):
     vdeX = jtimes(f_expl,x,Sx)
     vdeP = jacobian(f_expl,u) + jtimes(f_expl,x,Sp)
 
-    fun_name = model_name + '_expl_vde_forw'
+    fun_name = f'{model_name}_expl_vde_forw'
 
     expl_vde_forw = Function(fun_name, [x, Sx, Sp, u, p], [f_expl, vdeX, vdeP])
 
     adj = jtimes(f_expl, vertcat(x, u), lambdaX, True)
 
-    fun_name = model_name + '_expl_vde_adj'
+    fun_name = f'{model_name}_expl_vde_adj'
     expl_vde_adj = Function(fun_name, [x, lambdaX, u, p], [adj])
 
     if generate_hess:
@@ -93,7 +93,7 @@ def generate_c_code_explicit_ode( model, opts ):
             for i in range(j,nx+nu):
                 hess2 = vertcat(hess2, hess[i,j])
 
-        fun_name = model_name + '_expl_ode_hess'
+        fun_name = f'{model_name}_expl_ode_hess'
         expl_ode_hess = Function(fun_name, [x, Sx, Sp, lambdaX, u, p], [adj, hess2])
 
     ## generate C code
@@ -102,22 +102,22 @@ def generate_c_code_explicit_ode( model, opts ):
 
     cwd = os.getcwd()
     os.chdir(code_export_dir)
-    model_dir = model_name + '_model'
+    model_dir = f'{model_name}_model'
     if not os.path.exists(model_dir):
         os.mkdir(model_dir)
     model_dir_location = os.path.join('.', model_dir)
     os.chdir(model_dir_location)
-    fun_name = model_name + '_expl_ode_fun'
+    fun_name = f'{model_name}_expl_ode_fun'
     expl_ode_fun.generate(fun_name, casadi_opts)
 
-    fun_name = model_name + '_expl_vde_forw'
+    fun_name = f'{model_name}_expl_vde_forw'
     expl_vde_forw.generate(fun_name, casadi_opts)
 
-    fun_name = model_name + '_expl_vde_adj'
+    fun_name = f'{model_name}_expl_vde_adj'
     expl_vde_adj.generate(fun_name, casadi_opts)
 
     if generate_hess:
-        fun_name = model_name + '_expl_ode_hess'
+        fun_name = f'{model_name}_expl_ode_hess'
         expl_ode_hess.generate(fun_name, casadi_opts)
     os.chdir(cwd)
 

@@ -46,11 +46,7 @@ def generate_c_code_nls_cost( model, cost_name, stage_type, opts ):
     x = model.x
     p = model.p
 
-    if isinstance(x, casadi.MX):
-        symbol = MX.sym
-    else:
-        symbol = SX.sym
-
+    symbol = MX.sym if isinstance(x, casadi.MX) else SX.sym
     if stage_type == 'terminal':
         middle_name = '_cost_y_e'
         u = symbol('u', 0, 0)
@@ -73,7 +69,7 @@ def generate_c_code_nls_cost( model, cost_name, stage_type, opts ):
 
     cwd = os.getcwd()
     os.chdir(code_export_dir)
-    gen_dir = cost_name + '_cost'
+    gen_dir = f'{cost_name}_cost'
     if not os.path.exists(gen_dir):
         os.mkdir(gen_dir)
     gen_dir_location = os.path.join('.', gen_dir)

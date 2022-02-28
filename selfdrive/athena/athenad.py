@@ -194,7 +194,7 @@ def setNavDestination(latitude=0, longitude=0):
 
 
 def scan_dir(path, prefix):
-  files = list()
+  files = []
   # only walk directories that match the prefix
   # (glob and friends traverse entire dir tree)
   with os.scandir(path) as i:
@@ -207,9 +207,8 @@ def scan_dir(path, prefix):
         # if prefix is a partial file name, prefix with start with dir name
         if rel_path.startswith(prefix) or prefix.startswith(rel_path):
           files.extend(scan_dir(e.path, prefix))
-      else:
-        if rel_path.startswith(prefix):
-          files.append(rel_path)
+      elif rel_path.startswith(prefix):
+        files.append(rel_path)
   return files
 
 @dispatcher.add_method
@@ -258,7 +257,7 @@ def listUploadQueue():
 
 @dispatcher.add_method
 def cancelUpload(upload_id):
-  upload_ids = set(item.id for item in list(upload_queue.queue))
+  upload_ids = {item.id for item in list(upload_queue.queue)}
   if upload_id not in upload_ids:
     return 404
 
@@ -281,9 +280,8 @@ def startLocalProxy(global_end_event, remote_ws_uri, local_port):
     params = Params()
     dongle_id = params.get("DongleId").decode('utf8')
     identity_token = Api(dongle_id).get_token()
-    ws = create_connection(remote_ws_uri,
-                           cookie="jwt=" + identity_token,
-                           enable_multithread=True)
+    ws = create_connection(
+        remote_ws_uri, cookie=f"jwt={identity_token}", enable_multithread=True)
 
     ssock, csock = socket.socketpair()
     local_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -307,10 +305,10 @@ def startLocalProxy(global_end_event, remote_ws_uri, local_port):
 
 @dispatcher.add_method
 def getPublicKey():
-  if not os.path.isfile(PERSIST + '/comma/id_rsa.pub'):
+  if not os.path.isfile(f'{PERSIST}/comma/id_rsa.pub'):
     return None
 
-  with open(PERSIST + '/comma/id_rsa.pub', 'r') as f:
+  with open(f'{PERSIST}/comma/id_rsa.pub', 'r') as f:
     return f.read()
 
 
@@ -340,12 +338,11 @@ def takeSnapshot():
   ret = snapshot()
   if ret is not None:
     def b64jpeg(x):
-      if x is not None:
-        f = io.BytesIO()
-        jpeg_write(f, x)
-        return base64.b64encode(f.getvalue()).decode("utf-8")
-      else:
+      if x is None:
         return None
+      f = io.BytesIO()
+      jpeg_write(f, x)
+      return base64.b64encode(f.getvalue()).decode("utf-8")
     return {'jpegBack': b64jpeg(ret[0]),
             'jpegFront': b64jpeg(ret[1])}
   else:
@@ -524,17 +521,19 @@ def main():
   params = Params()
   dongle_id = params.get("DongleId", encoding='utf-8')
 
-  ws_uri = ATHENA_HOST + "/ws/v2/" + dongle_id
+  ws_uri = f'{ATHENA_HOST}/ws/v2/{dongle_id}'
   api = Api(dongle_id)
 
   conn_retries = 0
   while 1:
     try:
       cloudlog.event("athenad.main.connecting_ws", ws_uri=ws_uri)
-      ws = create_connection(ws_uri,
-                             cookie="jwt=" + api.get_token(),
-                             enable_multithread=True,
-                             timeout=30.0)
+      ws = create_connection(
+          ws_uri,
+          cookie=f"jwt={api.get_token()}",
+          enable_multithread=True,
+          timeout=30.0,
+      )
       cloudlog.event("athenad.main.connected_ws", ws_uri=ws_uri)
       params.delete("PrimeRedirected")
 

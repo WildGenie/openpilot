@@ -28,8 +28,7 @@ class EchoSocket():
 
     try:
       while True:
-        data = conn.recv(4096)
-        if data:
+        if data := conn.recv(4096):
           print(f'EchoSocket got {data}')
           conn.sendall(data)
         else:

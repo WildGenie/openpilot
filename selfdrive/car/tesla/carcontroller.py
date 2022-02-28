@@ -11,8 +11,6 @@ class CarController():
     self.tesla_can = TeslaCAN(dbc_name, self.packer)
 
   def update(self, enabled, CS, frame, actuators, cruise_cancel):
-    can_sends = []
-
     # Temp disable steering on a hands_on_fault, and allow for user override
     hands_on_fault = (CS.steer_warning == "EAC_ERROR_HANDS_ON" and CS.hands_on_level >= 3)
     lkas_enabled = enabled and (not hands_on_fault)
@@ -32,8 +30,9 @@ class CarController():
       apply_angle = CS.out.steeringAngleDeg
 
     self.last_angle = apply_angle
-    can_sends.append(self.tesla_can.create_steering_control(apply_angle, lkas_enabled, frame))
-
+    can_sends = [
+        self.tesla_can.create_steering_control(apply_angle, lkas_enabled, frame)
+    ]
     # Cancel on user steering override, since there is no steering torque blending
     if hands_on_fault:
       cruise_cancel = True
@@ -45,9 +44,12 @@ class CarController():
     if ((frame % 10) == 0 and cruise_cancel):
       # Spam every possible counter value, otherwise it might not be accepted
       for counter in range(16):
-        can_sends.append(self.tesla_can.create_action_request(CS.msg_stw_actn_req, cruise_cancel, CANBUS.chassis, counter))
-        can_sends.append(self.tesla_can.create_action_request(CS.msg_stw_actn_req, cruise_cancel, CANBUS.autopilot, counter))
-
+        can_sends.extend((
+            self.tesla_can.create_action_request(
+                CS.msg_stw_actn_req, cruise_cancel, CANBUS.chassis, counter),
+            self.tesla_can.create_action_request(
+                CS.msg_stw_actn_req, cruise_cancel, CANBUS.autopilot, counter),
+        ))
     # TODO: HUD control
 
     return can_sends

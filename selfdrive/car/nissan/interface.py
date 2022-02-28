@@ -21,12 +21,7 @@ class CarInterface(CarInterfaceBase):
 
     ret.steerActuatorDelay = 0.1
 
-    if candidate in [CAR.ROGUE, CAR.XTRAIL]:
-      ret.mass = 1610 + STD_CARGO_KG
-      ret.wheelbase = 2.705
-      ret.centerToFront = ret.wheelbase * 0.44
-      ret.steerRatio = 17
-    elif candidate in [CAR.LEAF, CAR.LEAF_IC]:
+    if candidate in [CAR.ROGUE, CAR.XTRAIL, CAR.LEAF, CAR.LEAF_IC]:
       ret.mass = 1610 + STD_CARGO_KG
       ret.wheelbase = 2.705
       ret.centerToFront = ret.wheelbase * 0.44
@@ -60,13 +55,11 @@ class CarInterface(CarInterfaceBase):
 
     ret = self.CS.update(self.cp, self.cp_adas, self.cp_cam)
 
-    ret.canValid = self.cp.can_valid and self.cp_adas.can_valid and self.cp_cam.can_valid
-
-    buttonEvents = []
+    ret.canValid = (self.cp.can_valid and self.cp_adas.can_valid
+                    and self.cp_cam.can_valid)
     be = car.CarState.ButtonEvent.new_message()
     be.type = car.CarState.ButtonEvent.Type.accelCruise
-    buttonEvents.append(be)
-
+    buttonEvents = [be]
     events = self.create_common_events(ret)
 
     if self.CS.lkas_enabled:

@@ -308,7 +308,7 @@ class TestAthenadMethods(unittest.TestCase):
       thread.join()
 
   def test_get_logs_to_send_sorted(self):
-    fl = list()
+    fl = []
     for i in range(10):
       fn = os.path.join(swaglog.SWAGLOG_DIR, f'swaglog.{i:010}')
       Path(fn).touch()

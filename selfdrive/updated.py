@@ -93,7 +93,7 @@ def set_consistent_flag(consistent: bool) -> None:
   consistent_file = Path(os.path.join(FINALIZED, ".overlay_consistent"))
   if consistent:
     consistent_file.touch()
-  elif not consistent:
+  else:
     consistent_file.unlink(missing_ok=True)
   os.sync()
 
@@ -287,7 +287,7 @@ def handle_neos_update(wait_helper: WaitTimeHelper) -> None:
 
 def check_git_fetch_result(fetch_txt: str) -> bool:
   err_msg = "Failed to add the host to the list of known hosts (/data/data/com.termux/files/home/.ssh/known_hosts).\n"
-  return len(fetch_txt) > 0 and (fetch_txt != err_msg)
+  return fetch_txt not in ['', err_msg]
 
 
 def check_for_update() -> Tuple[bool, bool]:

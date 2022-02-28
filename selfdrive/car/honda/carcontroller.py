@@ -19,8 +19,8 @@ def compute_gb_honda_bosch(accel, speed):
 def compute_gb_honda_nidec(accel, speed):
   creep_brake = 0.0
   creep_speed = 2.3
-  creep_brake_value = 0.15
   if speed < creep_speed:
+    creep_brake_value = 0.15
     creep_brake = (creep_speed - speed) / creep_speed * creep_brake_value
   gb = float(accel) / 4.8 - creep_brake
   return clip(gb, 0.0, 1.0), clip(-gb, 0.0, 1.0)
@@ -58,8 +58,6 @@ def actuator_hystereses(brake, braking, brake_steady, v_ego, car_fingerprint):
 
 
 def brake_pump_hysteresis(apply_brake, apply_brake_last, last_pump_ts, ts):
-  pump_on = False
-
   # reset pump timer if:
   # - there is an increment in brake request
   # - we are applying steady state brakes and we haven't been running the pump
@@ -67,10 +65,7 @@ def brake_pump_hysteresis(apply_brake, apply_brake_last, last_pump_ts, ts):
   if apply_brake > apply_brake_last or (ts - last_pump_ts > 20. and apply_brake > 0):
     last_pump_ts = ts
 
-  # once the pump is on, run it for at least 0.2s
-  if ts - last_pump_ts < 0.2 and apply_brake > 0:
-    pump_on = True
-
+  pump_on = ts - last_pump_ts < 0.2 and apply_brake > 0
   return pump_on, last_pump_ts
 
 
@@ -126,16 +121,9 @@ class CarController():
     self.brake_last = rate_limit(pre_limit_brake, self.brake_last, -2., DT_CTRL)
 
     # vehicle hud display, wait for one update from 10Hz 0x304 msg
-    if hud_show_lanes:
-      hud_lanes = 1
-    else:
-      hud_lanes = 0
-
+    hud_lanes = 1 if hud_show_lanes else 0
     if enabled:
-      if hud_show_car:
-        hud_car = 2
-      else:
-        hud_car = 1
+      hud_car = 2 if hud_show_car else 1
     else:
       hud_car = 0
 
@@ -153,9 +141,9 @@ class CarController():
     can_sends = []
 
     # tester present - w/ no response (keeps radar disabled)
-    if CS.CP.carFingerprint in HONDA_BOSCH and CS.CP.openpilotLongitudinalControl:
-      if (frame % 10) == 0:
-        can_sends.append((0x18DAB0F1, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", 1))
+    if (CS.CP.carFingerprint in HONDA_BOSCH
+        and CS.CP.openpilotLongitudinalControl and (frame % 10) == 0):
+      can_sends.append((0x18DAB0F1, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", 1))
 
     # Send steering command.
     idx = frame % 4
@@ -204,39 +192,37 @@ class CarController():
       elif CS.out.cruiseState.standstill:
         can_sends.append(hondacan.spam_buttons_command(self.packer, CruiseButtons.RES_ACCEL, idx, CS.CP.carFingerprint))
 
-    else:
-      # Send gas and brake commands.
-      if (frame % 2) == 0:
-        idx = frame // 2
-        ts = frame * DT_CTRL
+    elif (frame % 2) == 0:
+      idx = frame // 2
+      ts = frame * DT_CTRL
 
-        if CS.CP.carFingerprint in HONDA_BOSCH:
-          accel = clip(accel, P.BOSCH_ACCEL_MIN, P.BOSCH_ACCEL_MAX)
-          bosch_gas = interp(accel, P.BOSCH_GAS_LOOKUP_BP, P.BOSCH_GAS_LOOKUP_V)
-          can_sends.extend(hondacan.create_acc_commands(self.packer, enabled, active, accel, bosch_gas, idx, stopping, starting, CS.CP.carFingerprint))
+      if CS.CP.carFingerprint in HONDA_BOSCH:
+        accel = clip(accel, P.BOSCH_ACCEL_MIN, P.BOSCH_ACCEL_MAX)
+        bosch_gas = interp(accel, P.BOSCH_GAS_LOOKUP_BP, P.BOSCH_GAS_LOOKUP_V)
+        can_sends.extend(hondacan.create_acc_commands(self.packer, enabled, active, accel, bosch_gas, idx, stopping, starting, CS.CP.carFingerprint))
 
-        else:
-          apply_brake = clip(self.brake_last - wind_brake, 0.0, 1.0)
-          apply_brake = int(clip(apply_brake * P.NIDEC_BRAKE_MAX, 0, P.NIDEC_BRAKE_MAX - 1))
-          pump_on, self.last_pump_ts = brake_pump_hysteresis(apply_brake, self.apply_brake_last, self.last_pump_ts, ts)
+      else:
+        apply_brake = clip(self.brake_last - wind_brake, 0.0, 1.0)
+        apply_brake = int(clip(apply_brake * P.NIDEC_BRAKE_MAX, 0, P.NIDEC_BRAKE_MAX - 1))
+        pump_on, self.last_pump_ts = brake_pump_hysteresis(apply_brake, self.apply_brake_last, self.last_pump_ts, ts)
 
-          pcm_override = True
-          can_sends.append(hondacan.create_brake_command(self.packer, apply_brake, pump_on,
-            pcm_override, pcm_cancel_cmd, fcw_display, idx, CS.CP.carFingerprint, CS.stock_brake))
-          self.apply_brake_last = apply_brake
+        pcm_override = True
+        can_sends.append(hondacan.create_brake_command(self.packer, apply_brake, pump_on,
+          pcm_override, pcm_cancel_cmd, fcw_display, idx, CS.CP.carFingerprint, CS.stock_brake))
+        self.apply_brake_last = apply_brake
 
-          if CS.CP.enableGasInterceptor:
-            # way too aggressive at low speed without this
-            gas_mult = interp(CS.out.vEgo, [0., 10.], [0.4, 1.0])
-            # send exactly zero if apply_gas is zero. Interceptor will send the max between read value and apply_gas.
-            # This prevents unexpected pedal range rescaling
-            # Sending non-zero gas when OP is not enabled will cause the PCM not to respond to throttle as expected
-            # when you do enable.
-            if enabled:
-              apply_gas = clip(gas_mult * (gas - brake + wind_brake*3/4), 0., 1.)
-            else:
-              apply_gas = 0.0
-            can_sends.append(create_gas_command(self.packer, apply_gas, idx))
+        if CS.CP.enableGasInterceptor:
+          # way too aggressive at low speed without this
+          gas_mult = interp(CS.out.vEgo, [0., 10.], [0.4, 1.0])
+          # send exactly zero if apply_gas is zero. Interceptor will send the max between read value and apply_gas.
+          # This prevents unexpected pedal range rescaling
+          # Sending non-zero gas when OP is not enabled will cause the PCM not to respond to throttle as expected
+          # when you do enable.
+          if enabled:
+            apply_gas = clip(gas_mult * (gas - brake + wind_brake*3/4), 0., 1.)
+          else:
+            apply_gas = 0.0
+          can_sends.append(create_gas_command(self.packer, apply_gas, idx))
 
     hud = HUDData(int(pcm_accel), int(round(hud_v_cruise)), hud_car,
                   hud_lanes, fcw_display, acc_alert, steer_required)
